@@ -471,17 +471,27 @@ function ocultarEscribiendo(){
   if (el) el.remove();
 }
 
-function responderPor(texto){
+const WEBHOOK_URL = 'https://adrianzz5.app.n8n.cloud/webhook/aidi';
+
+async function responderPor(texto){
   ponerMascota('pensando', true);
   mostrarEscribiendo();
-  setTimeout(() => {
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ mensaje: texto })
+    });
+    const data = await res.json();
     ocultarEscribiendo();
-    const clave = Object.keys(respuestas).find(k => texto.toLowerCase().includes(k)) ;
-    const respuesta = respuestas[clave] || '👀 Todavía soy un mockup — en la versión real acá te respondo con los datos reales.';
-    agregarMensaje(respuesta, 'aidi');
+    agregarMensaje(data.texto || '🤔 No me llegó respuesta, revisá el workflow.', 'aidi');
     ponerMascota('encontre');
-    setTimeout(() => ponerMascota('reposo'), 1400);
-  }, 900);
+  } catch (err) {
+    ocultarEscribiendo();
+    agregarMensaje('⚠️ No pude conectarme con el servidor. Probá de nuevo en un rato.', 'aidi');
+    ponerMascota('sinstock');
+  }
+  setTimeout(() => ponerMascota('reposo'), 1400);
 }
 
 function enviarMensaje(texto){
