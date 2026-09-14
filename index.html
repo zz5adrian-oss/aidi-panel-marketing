@@ -241,6 +241,14 @@
     font-size:12.5px;
     color:var(--tinta-suave);
   }
+  .adjunto-clickeable{
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .adjunto-clickeable:hover{
+    border-color:var(--musgo);
+    background:var(--musgo-suave);
+  }
   .adjunto .icono{
     width:30px;height:30px;
     border-radius:8px;
@@ -401,6 +409,29 @@ function agregarMensaje(texto, quien){
   scrollAbajo();
 }
 
+function abrirDashboard(html, nombreBoton){
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+function agregarMensajeConDashboard(texto, html, nombreArchivo){
+  conversacion.classList.remove('vacia');
+  document.querySelector('.hero').classList.add('compacta');
+  const div = document.createElement('div');
+  div.className = 'msg aidi';
+  div.innerHTML = `
+    ${texto}
+    <div class="adjunto adjunto-clickeable">
+      <div class="icono">📊</div>
+      <div><b>${nombreArchivo}</b>Tocá para ver el dashboard completo</div>
+    </div>
+  `;
+  div.querySelector('.adjunto-clickeable').addEventListener('click', () => abrirDashboard(html, nombreArchivo));
+  conversacion.appendChild(div);
+  scrollAbajo();
+}
+
 // ---------- Mascota Aidi (reposo / pensando / encontré / sin stock) ----------
 const mascotaEl = document.getElementById('mascota');
 
@@ -484,7 +515,11 @@ async function responderPor(texto){
     });
     const data = await res.json();
     ocultarEscribiendo();
-    agregarMensaje(data.texto || '🤔 No me llegó respuesta, revisá el workflow.', 'aidi');
+    if (data.dashboard_html) {
+      agregarMensajeConDashboard(data.texto || '📊 Acá está tu dashboard', data.dashboard_html, 'dashboard-full.html');
+    } else {
+      agregarMensaje(data.texto || '🤔 No me llegó respuesta, revisá el workflow.', 'aidi');
+    }
     ponerMascota('encontre');
   } catch (err) {
     ocultarEscribiendo();
